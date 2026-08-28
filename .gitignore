@@ -1,0 +1,13 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 环境与密钥（绝不提交）
+.env
+*.key
+config.local.*
+
+# 操作系统
+.DS_Store
+Thumbs.db

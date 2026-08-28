@@ -1,0 +1,4 @@
+numpy>=1.24
+matplotlib>=3.6
+# 可选：安装后 main.py 会自动用 OR-Tools 求 n=20 的基准（不装也能跑）
+# ortools
