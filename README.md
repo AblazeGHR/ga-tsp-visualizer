@@ -39,7 +39,7 @@ E:/software/miniforge/python.exe -m pip install -r requirements.txt
 E:/software/miniforge/python.exe -m pip install ortools
 
 # 3) 跑演示
-cd "D:/notes/Ablaze/pages/理工/计算机/申请导师快速练习项目/ga-tsp-visualizer"
+cd ga-tsp-visualizer
 E:/software/miniforge/python.exe main.py
 ```
 

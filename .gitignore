@@ -11,3 +11,7 @@ config.local.*
 # 操作系统
 .DS_Store
 Thumbs.db
+
+# 理解文档（本地笔记，不纳入版本控制）
+理解文档.md
+理解文档*.md
