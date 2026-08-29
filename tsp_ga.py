@@ -184,3 +184,100 @@ def solve_tsp(n_nodes, seed=None, pop_size=100, generations=300,
         pop = new_pop
 
     return best_cost, best_route, history, cities, dist
+
+
+# ---------- 追加：3-opt 与备选遗传算子（消融实验用，不改变原函数） ----------
+
+def three_opt(route, dist, max_passes=10):
+    """3-opt 局部搜索（two_opt 打底 + 方向保留段交换）。
+
+    2-opt 每次反转一段，能消除「交叉型」缺陷；3-opt 进一步把环切成
+    A/B/C 三段并尝试不同顺序重新拼接（方向保留），处理 2-opt 无能为力
+    的「缠绕型」缺陷。实现上先跑 two_opt 再做段交换循环，因此结果
+    必然不劣于 two_opt，代价是每轮扫描 O(n^3) 更慢。
+    """
+    r = two_opt(list(route), dist, max_passes)
+    n = len(r)
+    best_cost = route_cost(r, dist)
+    for _ in range(max_passes):
+        improved = False
+        for a in range(1, n):
+            for b in range(a + 1, n):
+                for c in range(b + 1, n + 1):
+                    if c - b < 1:
+                        continue
+                    A, B = r[a:b], r[b:c]
+                    C = r[c:] + r[:a]
+                    for cand in (A + C + B, B + A + C,
+                                 B + C + A, C + A + B, C + B + A):
+                        cc = route_cost(cand, dist)
+                        if cc < best_cost - 1e-12:
+                            r, best_cost = cand, cc
+                            improved = True
+        if not improved:
+            break
+    return r
+
+
+def pmx_crossover(p1, p2):
+    """部分匹配交叉（PMX，Partially Mapped Crossover）。
+
+    继承 p1 中一段，其余位置按 p2 顺序填入；若与 p1 段冲突，则沿
+    「p1 段元素 ↔ p2 段元素」的映射关系替换，保证子代仍是合法排列。
+    """
+    n = len(p1)
+    a, b = sorted(random.sample(range(n), 2))
+    child = [None] * n
+    child[a:b] = p1[a:b]
+    pmap = {p1[i]: p2[i] for i in range(a, b)}
+    for i in range(n):
+        if child[i] is None:
+            v = p2[i]
+            while v in pmap:
+                v = pmap[v]
+            child[i] = v
+    return child
+
+
+def cx_crossover(p1, p2):
+    """循环交叉（CX，Cycle Crossover）。
+
+    p1 与 p2 的排列可分解为若干不相交循环；不同循环交替继承 p1 / p2
+    的绝对位置基因，不引入任何重复基因。
+    """
+    n = len(p1)
+    child = [None] * n
+    pos = {g: i for i, g in enumerate(p1)}
+    visited = [False] * n
+    use_p1 = True
+    for i in range(n):
+        if visited[i]:
+            continue
+        j = i
+        while not visited[j]:
+            visited[j] = True
+            child[j] = p1[j] if use_p1 else p2[j]
+            j = pos[p2[j]]
+        use_p1 = not use_p1
+    return child
+
+
+def inversion_mutation(route, rate=0.1):
+    """逆序变异：以 rate 概率反转一段连续子路径（与 2-opt 同源的破坏方式）。"""
+    n = len(route)
+    r = list(route)
+    if random.random() < rate:
+        a, b = sorted(random.sample(range(n), 2))
+        r[a:b] = reversed(r[a:b])
+    return r
+
+
+def insertion_mutation(route, rate=0.1):
+    """插入变异：以 rate 概率随机取出一个城市插入到随机位置。"""
+    n = len(route)
+    r = list(route)
+    if random.random() < rate:
+        i = random.randrange(n)
+        g = r.pop(i)
+        r.insert(random.randrange(n), g)
+    return r
